@@ -416,6 +416,7 @@
 								@edit-item="handleEditItem"
 								@edit-modifiers="handleEditModifiers"
 								@send-to-kitchen="handleSendToKitchen"
+								@kitchen-blocked="handleKitchenBlocked"
 								@view-shift="uiStore.showOpenShiftDialog = true"
 								@show-drafts="openDraftDialog"
 								@show-history="openHistoryDialog"
@@ -1989,9 +1990,38 @@ function buildPreparationText(item) {
 	return parts.join(" · ");
 }
 
+function handleKitchenBlocked(reason) {
+	showWarning(reason || __("Completa los datos antes de enviar a cocina"));
+}
+
 async function handleSendToKitchen(meta = {}) {
 	const kitchenItems = cartStore.invoiceItems.filter((i) => i.is_kitchen_item && !i.is_free_item);
 	if (!kitchenItems.length) return;
+
+	const customerValue = cartStore.customer?.name || cartStore.customer || shiftStore.profileCustomer;
+	const channel = meta.channel || "Mesa";
+	const destination = (tableName.value || meta.destination || "").trim();
+	const person = (meta.person || "").trim();
+	const deliveryPartner = (meta.delivery_partner || "").trim();
+
+	if (!customerValue) {
+		showWarning(__("Asigna un cliente antes de enviar a cocina"));
+		uiStore.showCustomerDialog = true;
+		return;
+	}
+	if (channel === "Mesa" && !destination && !sessionName.value) {
+		showWarning(__("Indica la mesa antes de enviar a cocina"));
+		return;
+	}
+	if (channel === "Pickup" && !(destination || person)) {
+		showWarning(__("Indica el nombre del cliente para el pickup"));
+		return;
+	}
+	if (channel === "Delivery") {
+		if (!destination) { showWarning(__("Indica la dirección de entrega antes de enviar a cocina")); return; }
+		if (!deliveryPartner) { showWarning(__("Indica el repartidor antes de enviar a cocina")); return; }
+	}
+
 	const items = kitchenItems.map((i) => ({
 		line_id: i.line_id,
 		item_code: i.item_code,
@@ -2008,11 +2038,12 @@ async function handleSendToKitchen(meta = {}) {
 				pos_profile: shiftStore.profileName,
 				items,
 				session_name: sessionName.value || null,
-				channel: meta.channel || null,
-				destination: tableName.value || meta.destination || null,
+				channel,
+				destination: destination || null,
 				delivery_type: meta.delivery_type || null,
-				delivery_partner: meta.delivery_partner || null,
-				person: meta.person || null,
+				delivery_partner: deliveryPartner || null,
+				person: person || null,
+				customer: customerValue,
 			}),
 		});
 		showSuccess(__("Comanda enviada a cocina"));

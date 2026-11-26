@@ -1421,11 +1421,14 @@
 				</div>
 			</details>
 <!-- Enviar a cocina (restaurante) -->
+			<p v-if="kitchenBlockReason" class="mb-1 px-1 text-[11px] font-semibold text-red-600">{{ kitchenBlockReason }}</p>
 			<button
 				v-if="hasKitchenItems"
 				type="button"
+				:disabled="!!kitchenBlockReason"
 				@click="emitKitchen"
-				class="w-full mb-1.5 py-2.5 px-3 rounded-lg font-bold text-xs text-white bg-orange-600 hover:bg-orange-700 active:bg-orange-800 transition-all flex items-center justify-center touch-manipulation active:scale-[0.98]"
+				:title="kitchenBlockReason || __('Enviar a cocina')"
+				class="w-full mb-1.5 py-2.5 px-3 rounded-lg font-bold text-xs text-white bg-orange-600 hover:bg-orange-700 active:bg-orange-800 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center justify-center touch-manipulation active:scale-[0.98]"
 				:aria-label="__('Send to kitchen')"
 			>
 				<svg class="w-4 h-4 me-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
@@ -1539,6 +1542,10 @@ function handleProceedToPayment() {
 }
 
 function emitKitchen() {
+	if (kitchenBlockReason.value) {
+		emit("kitchen-blocked", kitchenBlockReason.value);
+		return;
+	}
 	emit("send-to-kitchen", {
 		channel: channel.value,
 		destination: destination.value.trim(),
@@ -1549,6 +1556,16 @@ function emitKitchen() {
 }
 
 const hasKitchenItems = computed(() => props.items.some((i) => i.is_kitchen_item && !i.is_free_item));
+const kitchenBlockReason = computed(() => {
+	const dest = destination.value.trim();
+	if (channel.value === "Mesa" && !dest) return __("Indica la mesa antes de enviar a cocina");
+	if (channel.value === "Pickup" && !(dest || person.value.trim())) return __("Indica el nombre del cliente para el pickup");
+	if (channel.value === "Delivery") {
+		if (!dest) return __("Indica la dirección de entrega");
+		if (!deliveryPartner.value.trim()) return __("Indica el repartidor");
+	}
+	return "";
+});
 const channel = ref("Mesa");
 const destination = ref("");
 const deliveryType = ref("Interno");
@@ -1658,6 +1675,7 @@ const emit = defineEmits([
 	"show-return", // () - Open return invoice dialog
 	"close-shift", // () - Close current shift
 	"send-to-kitchen", // () - Send kitchen items to kitchen (comanda)
+	"kitchen-blocked", // (reason) - Validation blocked sending to kitchen
 	"edit-modifiers", // (item) - Open modifier dialog
 	// "create-sales-order", // () - Create Sales Order // Removed as per instruction
 ]);

@@ -18,6 +18,8 @@
         "delivery_type",
         "delivery_partner",
         "person",
+        "customer",
+        "sales_invoice",
         "section_break_times",
         "started_at",
         "ready_at",
@@ -157,6 +159,18 @@
             "fieldtype": "Data",
             "label": "Receptor",
             "in_list_view": 1
+        },
+        {
+            "fieldname": "customer",
+            "fieldtype": "Link",
+            "options": "Customer",
+            "label": "Cliente"
+        },
+        {
+            "fieldname": "sales_invoice",
+            "fieldtype": "Link",
+            "options": "Sales Invoice",
+            "label": "Factura"
         }
     ],
     "links": [],

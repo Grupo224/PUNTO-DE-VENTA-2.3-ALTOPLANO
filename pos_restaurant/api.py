@@ -32,6 +32,25 @@ def send_to_kitchen(payload):
 	if not company:
 		frappe.throw(_("Company is required"))
 
+	channel = data.get("channel")
+	customer = data.get("customer")
+	destination = (data.get("destination") or "").strip()
+	person = (data.get("person") or "").strip()
+	delivery_partner = (data.get("delivery_partner") or "").strip()
+
+	if not customer:
+		frappe.throw(_("Asigna un cliente antes de enviar a cocina"))
+
+	if channel == "Mesa" and not (destination or data.get("session_name")):
+		frappe.throw(_("Indica la mesa antes de enviar a cocina"))
+	elif channel == "Pickup" and not (destination or person):
+		frappe.throw(_("Indica el nombre del cliente para el pickup"))
+	elif channel == "Delivery":
+		if not destination:
+			frappe.throw(_("Indica la dirección de entrega antes de enviar a cocina"))
+		if not delivery_partner:
+			frappe.throw(_("Indica el repartidor antes de enviar a cocina"))
+
 	from pos_restaurant.restaurant_orders import (
 		_upsert,
 		_normalize,
@@ -77,6 +96,7 @@ def send_to_kitchen(payload):
 	comanda.delivery_type = data.get("delivery_type")
 	comanda.delivery_partner = data.get("delivery_partner")
 	comanda.person = data.get("person")
+	comanda.customer = customer
 	if session:
 		comanda.table_session = session.name
 		comanda.table = session.table
