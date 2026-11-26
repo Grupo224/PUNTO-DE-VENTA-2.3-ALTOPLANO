@@ -1,9 +1,11 @@
 {
     "actions": [],
-    "autoname": "hash",
+    "autoname": "COM-.YYYY.-.MM.-.####",
+    "naming_rule": "Expression (old style)",
     "creation": "2026-11-24 00:00:00.000000",
     "doctype": "DocType",
     "document_type": "Other",
+    "title_field": "destination",
     "editable_grid": 1,
     "engine": "InnoDB",
     "field_order": [

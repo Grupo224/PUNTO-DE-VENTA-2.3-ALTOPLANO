@@ -265,6 +265,9 @@ required_apps = ["pos_next"]
 # ignore_translatable_strings_from = []
 
 
+# === Comanda Kanban card enhancement ===
+doctype_list_js = {"Comanda": "public/js/comanda_list.js"}
+
 # === Restaurant inventory doc_events ===
 doc_events = {
 	"Sales Invoice": {

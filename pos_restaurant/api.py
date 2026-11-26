@@ -171,6 +171,34 @@ def get_comanda(name):
 
 
 @frappe.whitelist()
+def get_kanban_card_info(pos_profile=None):
+	"""Información enriquecida para las tarjetas del Kanban de Comandas."""
+	filters = {}
+	if pos_profile:
+		filters["pos_profile"] = pos_profile
+	names = frappe.get_all("Comanda", filters=filters, pluck="name", order_by="creation desc", limit_page_length=500)
+	info = {}
+	for name in names:
+		doc = frappe.get_doc("Comanda", name)
+		info[name] = {
+			"name": name,
+			"status": doc.status,
+			"channel": doc.channel,
+			"destination": doc.destination,
+			"person": doc.person,
+			"item_count": len(doc.items or []),
+			"table": doc.table,
+			"table_session": doc.table_session,
+			"sales_invoice": doc.sales_invoice,
+			"started_at": str(doc.started_at) if doc.started_at else None,
+			"ready_at": str(doc.ready_at) if doc.ready_at else None,
+			"delivered_at": str(doc.delivered_at) if doc.delivered_at else None,
+			"creation": str(doc.creation),
+		}
+	return info
+
+
+@frappe.whitelist()
 def set_comanda_status(name, status, destination=None, person=None):
 	doc = frappe.get_doc("Comanda", name)
 	allowed = STATUS_TRANSITIONS.get(doc.status, [])
