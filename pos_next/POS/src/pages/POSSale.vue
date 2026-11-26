@@ -1998,28 +1998,16 @@ async function handleSendToKitchen(meta = {}) {
 	const kitchenItems = cartStore.invoiceItems.filter((i) => i.is_kitchen_item && !i.is_free_item);
 	if (!kitchenItems.length) return;
 
-	const customerValue = cartStore.customer?.name || cartStore.customer || shiftStore.profileCustomer;
-	const channel = meta.channel || "Mesa";
-	const destination = (tableName.value || meta.destination || "").trim();
 	const person = (meta.person || "").trim();
-	const deliveryPartner = (meta.delivery_partner || "").trim();
 
-	if (!customerValue) {
-		showWarning(__("Asigna un cliente antes de enviar a cocina"));
-		uiStore.showCustomerDialog = true;
+	if (!person) {
+		showWarning(__("Indica el receptor (quién recibe) antes de enviar a cocina"));
 		return;
 	}
-	if (channel === "Mesa" && !destination && !sessionName.value) {
-		showWarning(__("Indica la mesa antes de enviar a cocina"));
-		return;
-	}
-	if (channel === "Pickup" && !(destination || person)) {
-		showWarning(__("Indica el nombre del cliente para el pickup"));
-		return;
-	}
-	if (channel === "Delivery") {
-		if (!destination) { showWarning(__("Indica la dirección de entrega antes de enviar a cocina")); return; }
-		if (!deliveryPartner) { showWarning(__("Indica el repartidor antes de enviar a cocina")); return; }
+
+	// 1 comanda por pedido: reutilizar el mismo request_id hasta limpiar el carrito
+	if (!kitchenRequestId.value) {
+		kitchenRequestId.value = "req_" + Date.now().toString(36) + "_" + Math.random().toString(36).slice(2, 10);
 	}
 
 	const items = kitchenItems.map((i) => ({
@@ -2037,13 +2025,13 @@ async function handleSendToKitchen(meta = {}) {
 				company: shiftStore.profileCompany,
 				pos_profile: shiftStore.profileName,
 				items,
+				request_id: kitchenRequestId.value,
 				session_name: sessionName.value || null,
-				channel,
-				destination: destination || null,
+				channel: meta.channel || null,
+				destination: tableName.value || meta.destination || null,
 				delivery_type: meta.delivery_type || null,
-				delivery_partner: deliveryPartner || null,
+				delivery_partner: meta.delivery_partner || null,
 				person: person || null,
-				customer: customerValue,
 			}),
 		});
 		showSuccess(__("Comanda enviada a cocina"));
@@ -2054,6 +2042,7 @@ async function handleSendToKitchen(meta = {}) {
 
 const tableName = ref(new URLSearchParams(window.location.search).get("table") || "");
 const sessionName = ref(new URLSearchParams(window.location.search).get("session") || "");
+const kitchenRequestId = ref("");
 const roomName = ref(new URLSearchParams(window.location.search).get("room") || "");
 
 let sessionSyncTimer = null;
@@ -2421,6 +2410,7 @@ function confirmClearCart() {
 	cartStore.clearCart();
 	// Reset cart hash when cart is cleared
 	previousCartHash = "";
+	kitchenRequestId.value = "";
 	editingOfflineContext = null;
 	uiStore.showClearCartDialog = false;
 	showSuccess(__("All items removed from cart"));

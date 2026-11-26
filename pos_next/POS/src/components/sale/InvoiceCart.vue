@@ -1557,13 +1557,7 @@ function emitKitchen() {
 
 const hasKitchenItems = computed(() => props.items.some((i) => i.is_kitchen_item && !i.is_free_item));
 const kitchenBlockReason = computed(() => {
-	const dest = destination.value.trim();
-	if (channel.value === "Mesa" && !dest) return __("Indica la mesa antes de enviar a cocina");
-	if (channel.value === "Pickup" && !(dest || person.value.trim())) return __("Indica el nombre del cliente para el pickup");
-	if (channel.value === "Delivery") {
-		if (!dest) return __("Indica la dirección de entrega");
-		if (!deliveryPartner.value.trim()) return __("Indica el repartidor");
-	}
+	if (!person.value.trim()) return __("Indica el receptor (quién recibe)");
 	return "";
 });
 const channel = ref("Mesa");
