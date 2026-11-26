@@ -1,0 +1,119 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "autoname": "hash",
+ "creation": "2026-11-25 00:00:00.000000",
+ "doctype": "DocType",
+ "document_type": "Other",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "table",
+  "room",
+  "pos_profile",
+  "opened_at",
+  "closed_at",
+  "status",
+  "sales_invoice",
+  "waiter",
+  "guests",
+  "items"
+ ],
+ "fields": [
+  {
+   "fieldname": "table",
+   "fieldtype": "Link",
+   "options": "Restaurant Table",
+   "label": "Mesa",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "room",
+   "fieldtype": "Link",
+   "options": "Restaurant Room",
+   "label": "Salon"
+  },
+  {
+   "fieldname": "pos_profile",
+   "fieldtype": "Link",
+   "options": "POS Profile",
+   "label": "POS Profile"
+  },
+  {
+   "fieldname": "opened_at",
+   "fieldtype": "Datetime",
+   "label": "Apertura",
+   "read_only": 1
+  },
+  {
+   "fieldname": "closed_at",
+   "fieldtype": "Datetime",
+   "label": "Cierre",
+   "read_only": 1
+  },
+  {
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "label": "Estado",
+   "options": "Abierta\nCerrada\nCancelada",
+   "default": "Abierta",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "sales_invoice",
+   "fieldtype": "Link",
+   "options": "Sales Invoice",
+   "label": "Factura"
+  },
+  {
+   "fieldname": "waiter",
+   "fieldtype": "Link",
+   "options": "User",
+   "label": "Mesero"
+  },
+  {
+   "fieldname": "guests",
+   "fieldtype": "Int",
+   "label": "Comensales"
+  },
+  {
+   "fieldname": "items",
+   "fieldtype": "Table",
+   "options": "Table Session Item",
+   "label": "Productos"
+  }
+ ],
+ "modified": "2026-11-25 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Restaurant",
+ "name": "Table Session",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "role": "System Manager",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "delete": 1,
+   "report": 1
+  },
+  {
+   "role": "POSNext Cashier",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "report": 1
+  },
+  {
+   "role": "Nexus POS Manager",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "delete": 1,
+   "report": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "ASC"
+}

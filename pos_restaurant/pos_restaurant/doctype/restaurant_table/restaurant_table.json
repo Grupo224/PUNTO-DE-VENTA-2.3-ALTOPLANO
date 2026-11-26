@@ -1,0 +1,111 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "autoname": "prompt",
+ "creation": "2026-11-25 00:00:00.000000",
+ "doctype": "DocType",
+ "document_type": "Other",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "room",
+  "capacity",
+  "shape",
+  "position_x",
+  "position_y",
+  "status",
+  "current_waiter",
+  "current_guests",
+  "current_session"
+ ],
+ "fields": [
+  {
+   "fieldname": "room",
+   "fieldtype": "Link",
+   "options": "Restaurant Room",
+   "label": "Salon",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "capacity",
+   "fieldtype": "Int",
+   "label": "Capacidad",
+   "default": "4"
+  },
+  {
+   "fieldname": "shape",
+   "fieldtype": "Select",
+   "label": "Forma",
+   "options": "Rectangular\nCuadrada\nRedonda\nOvalada",
+   "default": "Rectangular"
+  },
+  {
+   "fieldname": "position_x",
+   "fieldtype": "Float",
+   "label": "Posicion X"
+  },
+  {
+   "fieldname": "position_y",
+   "fieldtype": "Float",
+   "label": "Posicion Y"
+  },
+  {
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "label": "Estado",
+   "options": "Disponible\nOcupada\nReservada\nLimpieza",
+   "default": "Disponible",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "current_waiter",
+   "fieldtype": "Link",
+   "options": "User",
+   "label": "Mesero"
+  },
+  {
+   "fieldname": "current_guests",
+   "fieldtype": "Int",
+   "label": "Comensales"
+  },
+  {
+   "fieldname": "current_session",
+   "fieldtype": "Link",
+   "options": "Table Session",
+   "label": "Sesion actual"
+  }
+ ],
+ "modified": "2026-11-25 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Restaurant",
+ "name": "Restaurant Table",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "role": "System Manager",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "delete": 1,
+   "report": 1
+  },
+  {
+   "role": "POSNext Cashier",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "report": 1
+  },
+  {
+   "role": "Nexus POS Manager",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "delete": 1,
+   "report": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "ASC",
+ "naming_rule": "Set by user"
+}
