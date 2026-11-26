@@ -2305,6 +2305,14 @@ onMounted(() => {
 	if (typeof document === "undefined") return;
 	// Use mousedown instead of click to catch events before they are swallowed by other handlers
 	document.addEventListener("mousedown", handleOutsideClick);
+	// Autollenar mesa (destination) y mesero (person) desde el contexto del salón
+	try {
+		const q = new URLSearchParams(window.location.search);
+		const table = q.get("table");
+		const waiter = q.get("waiter_name") || q.get("waiter");
+		if (table) destination.value = table;
+		if (waiter) person.value = waiter;
+	} catch (e) { /* noop */ }
 });
 
 /**

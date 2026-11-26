@@ -561,7 +561,9 @@ async function openPOS(t) {
       const s = await call("pos_restaurant.api.open_table", { table_name: t.name, guests: t.current_guests || 1 });
       session = s.name;
     }
-    router.push({ path: "/", query: { table: t.name, session: session, room: t.room, waiter: t.current_waiter || "" } });
+    const w = waiters.value.find(x => x.name === t.current_waiter);
+    const waiterName = w ? w.full_name : (t.current_waiter || "");
+    router.push({ path: "/", query: { table: t.name, session: session, room: t.room, waiter: t.current_waiter || "", waiter_name: waiterName } });
   } catch (e) { toast("No se pudo abrir la mesa"); }
 }
 function reserveDialog(t) {
