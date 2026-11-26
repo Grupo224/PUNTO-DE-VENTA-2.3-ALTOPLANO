@@ -15,6 +15,19 @@
         </nav>
       </div>
 
+      <section class="cr-dash" aria-label="Resumen del salón">
+        <div class="cr-dashkpis">
+          <button class="cr-dkpi cr-dkpi-mesa" @click="setMode('summary')"><strong>{{ countStatus('Ocupada') }}</strong><span>Ocupadas</span></button>
+          <button class="cr-dkpi cr-dkpi-libre" @click="setMode('summary')"><strong>{{ countStatus('Disponible') }}</strong><span>Disponibles</span></button>
+          <button class="cr-dkpi cr-dkpi-espera" @click="setMode('summary')"><strong>{{ countStatus('Reservada') }}</strong><span>Reservadas</span></button>
+          <button class="cr-dkpi cr-dkpi-limpieza" @click="setMode('summary')"><strong>{{ countStatus('Limpieza') }}</strong><span>Limpieza</span></button>
+          <button class="cr-dkpi cr-dkpi-comensales" @click="setMode('summary')"><strong>{{ totalGuests }}</strong><span>Comensales</span></button>
+        </div>
+        <div class="cr-alerts" v-if="alerts.length">
+          <span v-for="a in alerts" :key="a.text" class="cr-alert" :class="'cr-alert-' + a.kind">{{ a.text }}</span>
+        </div>
+      </section>
+
       <section class="cr-bar">
         <label class="cr-room">Área
           <select v-model="room" @change="onRoomChange">
@@ -110,13 +123,6 @@
 
       <section class="cr-extra" v-if="mode==='summary'">
         <h2>Atención en mesas</h2>
-        <div class="cr-kpis">
-          <div class="cr-kpi cr-kpi-mesa"><strong>{{ countStatus('Ocupada') }}</strong><span>En mesa</span></div>
-          <div class="cr-kpi cr-kpi-espera"><strong>{{ countStatus('Reservada') }}</strong><span>En espera</span></div>
-          <div class="cr-kpi cr-kpi-libre"><strong>{{ countStatus('Disponible') }}</strong><span>Disponibles</span></div>
-          <div class="cr-kpi cr-kpi-limpieza"><strong>{{ countStatus('Limpieza') }}</strong><span>Limpieza</span></div>
-          <div class="cr-kpi cr-kpi-comensales"><strong>{{ totalGuests }}</strong><span>Comensales en sala</span></div>
-        </div>
 
         <div class="cr-lists">
           <div class="cr-listbox" v-if="waitingList.length">
@@ -254,6 +260,16 @@ const countStatus = (status) => tables.value.filter(t => t.status === status).le
 const totalGuests = computed(() => tables.value.reduce((s, t) => s + (Number(t.current_guests) || 0), 0));
 const waitingList = computed(() => tables.value.filter(t => t.status === "Reservada"));
 const occupiedList = computed(() => tables.value.filter(t => t.status === "Ocupada"));
+const alerts = computed(() => {
+  const a = [];
+  const clean = tables.value.filter(t => t.status === "Limpieza").length;
+  if (clean > 0) a.push({ kind: "warn", text: clean + " mesa(s) por liberar" });
+  const occNoWaiter = tables.value.filter(t => t.status === "Ocupada" && !t.current_waiter).length;
+  if (occNoWaiter > 0) a.push({ kind: "danger", text: occNoWaiter + " mesa(s) ocupada(s) sin mesero" });
+  const reserved = tables.value.filter(t => t.status === "Reservada").length;
+  if (reserved > 0) a.push({ kind: "info", text: reserved + " reserva(s) en espera" });
+  return a;
+});
 
 // items unificados (mesas del backend + mobiliario local)
 const items = computed(() => {
@@ -545,7 +561,7 @@ async function openPOS(t) {
       const s = await call("pos_restaurant.api.open_table", { table_name: t.name, guests: t.current_guests || 1 });
       session = s.name;
     }
-    router.push({ path: "/", query: { table: t.name, session: session, room: t.room } });
+    router.push({ path: "/", query: { table: t.name, session: session, room: t.room, waiter: t.current_waiter || "" } });
   } catch (e) { toast("No se pudo abrir la mesa"); }
 }
 function reserveDialog(t) {
@@ -606,6 +622,21 @@ onUnmounted(() => { unbind(); });
 .cr-bar .cr-counts { color: #485564; margin-right: auto; }
 .cr-room { display: flex; align-items: center; gap: 8px; }
 .cr-notice { flex: 0 0 auto; min-height: 1.2em; margin: 4px 0; color: #193c76; }
+.cr-dash { flex: 0 0 auto; display: flex; flex-direction: column; gap: 8px; padding: 8px 0 2px; }
+.cr-dashkpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; }
+.cr-dkpi { cursor: pointer; text-align: left; border: 1px solid #dce1e6; border-radius: 12px; padding: 12px 14px; background: #fff; font-weight: 600; }
+.cr-dkpi strong { display: block; font-size: 1.9rem; line-height: 1; color: #193c76; }
+.cr-dkpi span { color: #485564; font-size: .85rem; font-weight: 650; }
+.cr-dkpi-mesa { border-top: 4px solid #ff7a00; }
+.cr-dkpi-libre { border-top: 4px solid #16a34a; }
+.cr-dkpi-espera { border-top: 4px solid #9333ea; }
+.cr-dkpi-limpieza { border-top: 4px solid #2563eb; }
+.cr-dkpi-comensales { border-top: 4px solid #0ea5e9; }
+.cr-alerts { display: flex; flex-wrap: wrap; gap: 8px; }
+.cr-alert { font-weight: 650; font-size: .88rem; padding: 6px 12px; border-radius: 8px; border: 1px solid transparent; }
+.cr-alert-danger { background: #fee2e2; color: #b91c1c; border-color: #fecaca; }
+.cr-alert-warn { background: #fef3c7; color: #92400e; border-color: #fde68a; }
+.cr-alert-info { background: #dbeafe; color: #1e40af; border-color: #bfdbfe; }
 .cr-layout { flex: 1 1 auto; min-height: 0; display: flex; align-items: stretch; gap: 14px; }
 .cr-board { flex: 1 1 auto; min-width: 0; min-height: 0; display: flex; flex-direction: column; background: #fff; border: 1px solid #dce1e6; border-radius: 12px; overflow: hidden; }
 .cr-boardhead { flex: 0 0 auto; display: flex; align-items: center; justify-content: space-between; padding: 8px 14px; }

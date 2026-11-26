@@ -38,13 +38,13 @@
 					<template v-if="lane.grouped">
 						<template v-for="(grp, ch) in lane.groups" :key="ch">
 							<h3 v-if="grp.length" class="groupname">{{ chLabel(ch) }} · {{ grp.length }}</h3>
-							<article v-for="o in grp" :key="o.name" class="card">
+							<article v-for="o in grp" :key="o.name" class="card" :data-status="o.status">
 								<card-body :order="o" :view="view" @action="advance" />
 							</article>
 						</template>
 					</template>
 					<template v-else>
-						<article v-for="o in lane.orders" :key="o.name" class="card">
+						<article v-for="o in lane.orders" :key="o.name" class="card" :data-status="o.status">
 							<card-body :order="o" :view="view" @action="advance" />
 						</article>
 						<p v-if="!lane.orders.length" class="empty">Sin pedidos en esta etapa.</p>
@@ -362,20 +362,20 @@ export default { components: { CardBody } };
 .kds-header { display: flex; align-items: center; gap: 22px; background: #fcf9f4; border-bottom: 3px solid #193c76; padding: 11px clamp(15px, 4vw, 40px); }
 .kds-header .brand b { font-size: 1.1rem; color: #193c76; letter-spacing: .04em; }
 .kds-header .brand span { font-size: .72rem; color: #42536b; font-weight: 700; margin-left: 8px; letter-spacing: .12em; }
-.kds-header nav { display: flex; gap: 3px; background: #e9edf2; padding: 4px; border-radius: 12px; margin-right: auto; }
-.kds-header nav button { min-width: 95px; border: 0; background: transparent; min-height: 46px; padding: 8px 12px; border-radius: 8px; font-weight: 650; cursor: pointer; color: #182944; }
+.kds-header nav { display: flex; gap: 8px; background: #e9edf2; padding: 6px; border-radius: 12px; margin-right: auto; }
+.kds-header nav button { min-width: 130px; border: 0; background: transparent; min-height: 46px; padding: 10px 16px; border-radius: 8px; font-weight: 650; cursor: pointer; color: #182944; }
 .kds-header nav button.on { background: #193c76; color: #fff; }
 .kds-header .net { font-size: .86rem; color: #42536b; font-weight: 600; }
 .kds main { max-width: 1580px; margin: auto; padding: 22px clamp(14px, 3vw, 44px); }
 .overview { background: #193c76; color: #fff; border-radius: 14px; padding: 20px clamp(16px, 2.4vw, 34px); display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; }
 .overview h1 { color: #fff; font-size: clamp(1.65rem, 3vw, 2.8rem); margin: 0; line-height: 1.1; }
 .overview h1::before { content: ""; display: block; background: #ff7a00; width: 36px; height: 4px; margin-bottom: 9px; }
-.meters { display: flex; gap: 5px; flex-wrap: wrap; }
-.meters button { display: flex; align-items: center; gap: 8px; color: #fff; border: 1px solid #849bc0; background: #163468; font-size: 1rem; min-height: 46px; padding: 8px 14px; border-radius: 8px; cursor: pointer; font-weight: 650; }
+.meters { display: flex; gap: 10px; flex-wrap: wrap; }
+.meters button { display: flex; align-items: center; gap: 8px; color: #fff; border: 1px solid #849bc0; background: #163468; font-size: 1rem; min-height: 48px; padding: 10px 16px; border-radius: 8px; cursor: pointer; font-weight: 650; }
 .meters strong { font-size: 1.5rem; }
 .bar { display: flex; align-items: center; gap: 12px; border-block: 1px solid #d3dae2; margin-top: 8px; padding: 12px 0; flex-wrap: wrap; }
-.channels { display: flex; gap: 4px; flex-wrap: wrap; }
-.channels button { font-weight: 650; min-height: 46px; padding: 8px 14px; border: 1px solid #aab4c0; border-radius: 8px; background: #fff; color: #182944; cursor: pointer; }
+.channels { display: flex; gap: 8px; flex-wrap: wrap; }
+.channels button { font-weight: 650; min-height: 48px; padding: 10px 16px; border: 1px solid #aab4c0; border-radius: 8px; background: #fff; color: #182944; cursor: pointer; }
 .channels button.on { background: #193c76; color: #fff; border-color: #193c76; }
 .bar .search { margin-left: auto; display: flex; gap: 8px; align-items: center; }
 .bar .search span { font-weight: 600; color: #42536b; font-size: .86rem; }
@@ -386,10 +386,19 @@ export default { components: { CardBody } };
 .lane { min-width: 0; min-height: 138px; border-radius: 12px; padding: 8px 3px 16px; scroll-margin-top: 16px; }
 .lane:focus { outline: 2px solid #193c76; }
 .lane.full { grid-column: 1 / -1; }
-.lanetitle { display: flex; align-items: center; justify-content: space-between; padding: 8px 4px 10px; border-bottom: 2px solid #193c76; margin-bottom: 12px; }
+.lanetitle { display: flex; align-items: center; justify-content: space-between; padding: 8px 4px 10px; border-bottom: 3px solid #193c76; margin-bottom: 12px; }
+.lane[data-zone="queued"] .lanetitle { border-bottom-color: #2563eb; }
+.lane[data-zone="working"] .lanetitle { border-bottom-color: #16a34a; }
+.lane[data-zone="ready"] .lanetitle { border-bottom-color: #f59e0b; }
+.lane[data-zone="done"] .lanetitle { border-bottom-color: #6b7280; }
 .lanetitle h2 { font-size: 1.38rem; color: #193c76; margin: 0; }
 .lanetitle span { font-weight: 700; padding: 2px 10px; background: #e3e9f1; border-radius: 15px; }
-.card { border: 1px solid #c9d0d9; background: #fff; border-radius: 12px; margin: 0 0 12px; padding: 18px 20px; overflow-wrap: anywhere; }
+.card { border: 1px solid #c9d0d9; border-left-width: 6px; background: #fff; border-radius: 12px; margin: 0 0 14px; padding: 18px 20px; overflow-wrap: anywhere; }
+.card[data-status="Pendiente"] { border-left-color: #2563eb; }
+.card[data-status="En preparación"] { border-left-color: #f59e0b; }
+.card[data-status="Lista"] { border-left-color: #16a34a; }
+.card[data-status="Entregada"] { border-left-color: #6b7280; }
+.card[data-status="Cancelada"] { border-left-color: #dc2626; }
 .cardhead { display: flex; align-items: center; justify-content: space-between; }
 .folio { font-weight: 700; color: #193c76; font-size: 1rem; }
 .time { font-weight: 600; color: #42536b; font-size: 1rem; font-variant-numeric: tabular-nums; }

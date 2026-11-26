@@ -341,6 +341,7 @@ def open_table(table_name, guests=1, waiter=None):
     table = frappe.get_doc("Restaurant Table", table_name)
     if table.status not in ("Disponible", "Reservada"):
         frappe.throw(_("La mesa {0} no esta disponible").format(table.name))
+    waiter = waiter or table.current_waiter or frappe.session.user
     pos_profile = frappe.db.get_value("Restaurant Room", table.room, "pos_profile") if table.room else None
     session = frappe.get_doc({
         "doctype": "Table Session",
@@ -349,12 +350,12 @@ def open_table(table_name, guests=1, waiter=None):
         "pos_profile": pos_profile,
         "opened_at": frappe.utils.now(),
         "status": "Abierta",
-        "waiter": waiter or frappe.session.user,
+        "waiter": waiter,
         "guests": guests or 1,
     })
     session.insert()
     table.status = "Ocupada"
-    table.current_waiter = waiter or frappe.session.user
+    table.current_waiter = waiter
     table.current_guests = guests or 1
     table.current_session = session.name
     table.save()

@@ -225,8 +225,17 @@
 					</button>
 				</template>
 			</POSHeader>
-			<div v-if="tableName" class="px-4 py-2 bg-orange-50 border-b border-orange-200 flex items-center gap-2 shadow-sm">
-				<span class="text-sm font-bold text-orange-700">Mesa: {{ tableName }}</span>
+			<div v-if="tableName" class="px-4 py-2.5 bg-orange-50 border-b border-orange-200 flex items-center gap-4 shadow-sm flex-wrap">
+				<span class="text-sm font-bold text-orange-800">Mesa: {{ tableName }}</span>
+				<span v-if="roomName" class="text-sm font-semibold text-orange-700">Salón: {{ roomName }}</span>
+				<span v-if="waiterLabel" class="text-sm font-semibold text-orange-700">Mesero: {{ waiterLabel }}</span>
+				<button
+					@click="openMesas"
+					class="ml-auto px-3 py-1.5 text-sm font-bold text-orange-700 bg-white border border-orange-300 rounded-lg hover:bg-orange-100 transition-colors flex items-center gap-2"
+				>
+					<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
+					<span>{{ __("Volver al salón") }}</span>
+				</button>
 			</div>
 
 			<!-- Main Content: Responsive Layout -->
@@ -2017,6 +2026,16 @@ async function handleSendToKitchen(meta = {}) {
 const tableName = ref(new URLSearchParams(window.location.search).get("table") || "");
 const sessionName = ref(new URLSearchParams(window.location.search).get("session") || "");
 const roomName = ref(new URLSearchParams(window.location.search).get("room") || "");
+const waiterName = ref(new URLSearchParams(window.location.search).get("waiter") || "");
+const waiterLabel = ref(waiterName.value);
+onMounted(async () => {
+	if (!waiterName.value) return;
+	try {
+		const users = (await call("pos_restaurant.api.get_waiters", {})) || [];
+		const u = users.find((x) => x.name === waiterName.value);
+		if (u && u.full_name) waiterLabel.value = u.full_name;
+	} catch (e) { /* noop */ }
+});
 
 let sessionSyncTimer = null;
 function syncSessionItems() {
