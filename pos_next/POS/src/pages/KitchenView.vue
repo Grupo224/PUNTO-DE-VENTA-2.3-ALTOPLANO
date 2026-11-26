@@ -55,8 +55,14 @@
 
 		<dialog ref="confirmEl">
 			<form @submit.prevent>
-				<h2>Confirmar entrega</h2>
-				<p>{{ confirmText }}</p>
+				<h2>Entregar comanda</h2>
+				<p class="muted">{{ confirmText }}</p>
+				<label class="field"><span>Destino</span>
+					<input v-model="handoff.destination" type="text" placeholder="Mesa, mostrador o cliente">
+				</label>
+				<label class="field"><span>Receptor</span>
+					<input v-model="handoff.person" type="text" placeholder="Quién recibe">
+				</label>
 				<div class="actions">
 					<button type="button" @click="closeConfirm">Volver</button>
 					<button type="button" class="primary" @click="confirmDelivery">Ya lo entregué</button>
@@ -79,6 +85,7 @@ const loading = ref(false);
 const net = ref("Cargando…");
 const confirmEl = ref(null);
 const pendingOrder = ref(null);
+const handoff = ref({ destination: "", person: "" });
 let timer = null;
 
 const CH = { Mesa: "table", Pickup: "pickup", Delivery: "delivery" };
@@ -181,7 +188,8 @@ function advance(o) {
 	if (loading.value) return;
 	if (NEXT[o.status] === "Entregada") {
 		pendingOrder.value = o;
-		confirmText.value = o.name + " · " + (o.destination || "Destino") + " · Recibe: " + (o.person || "—");
+		handoff.value = { destination: o.destination || "", person: o.person || "" };
+		confirmText.value = o.name;
 		confirmEl.value?.showModal();
 		return;
 	}
@@ -198,11 +206,21 @@ async function doAdvance(o) {
 	await load();
 }
 
-function confirmDelivery() {
+async function confirmDelivery() {
 	const o = pendingOrder.value;
 	pendingOrder.value = null;
 	confirmEl.value?.close();
-	if (o) doAdvance(o);
+	if (!o) return;
+	try {
+		await call("pos_restaurant.api.update_comanda_handoff", {
+			name: o.name,
+			destination: handoff.value.destination,
+			person: handoff.value.person,
+		});
+	} catch (e) {
+		notice.value = e?.messages?.join(", ") || e?.message || String(e);
+	}
+	await doAdvance(o);
 }
 
 function closeConfirm() {
@@ -315,14 +333,13 @@ const CardBody = defineComponent({
 			]);
 		}));
 
-		const warning = blocked ? h("p", { class: "warning" }, "Falta destino o receptor. Completar en POS.") : null;
+		const warning = blocked ? h("p", { class: "warning" }, "Falta destino o receptor; se pedirá al entregar.") : null;
 
 		const label = this.actionLabel(o.status);
 		const actions = label
 			? h("div", { class: "actions" }, [
 				h("button", {
 					class: "action-btn " + (o.status === "En preparación" ? "primary" : "start"),
-					disabled: blocked,
 					onClick: () => this.$emit("action", o),
 				}, label),
 			])
@@ -405,9 +422,13 @@ export default { components: { CardBody } };
 .expo .dest { font-size: clamp(1.6rem, 2vw, 2.1rem); }
 .expo .recipient { font-size: 1.3rem; }
 .expo .food strong { font-size: 1.25rem; }
-dialog { width: min(400px, 90vw); border: 1px solid #c6d0dc; border-radius: 13px; padding: 24px; }
+dialog { width: min(440px, 92vw); border: 1px solid #c6d0dc; border-radius: 13px; padding: 24px; }
 dialog::backdrop { background: #14223988; }
 dialog p { margin: 10px 0; }
+dialog p.muted { color: #42536b; font-size: .92rem; }
+dialog .field { display: grid; gap: 6px; margin: 12px 0; }
+dialog .field span { font-weight: 650; color: #193c76; }
+dialog .field input { min-height: 46px; padding: 8px 12px; border: 1px solid #aab4c0; border-radius: 8px; font: inherit; }
 dialog .actions { margin-top: 16px; }
 button:focus-visible, input:focus-visible { outline: 3px solid #1959ac; outline-offset: 2px; }
 @media (max-width: 800px) {

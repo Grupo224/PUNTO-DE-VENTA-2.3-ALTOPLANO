@@ -88,6 +88,12 @@
                 <dt>Mesero</dt><dd>{{ selectedTable.current_waiter || '—' }}</dd>
                 <dt>Cuenta</dt><dd>{{ selectedTable.current_session ? 'Abierta' : '—' }}</dd>
               </dl>
+              <label v-if="selectedTable" class="cr-waiter">Asignar mesero
+                <select :value="selectedTable.current_waiter || ''" @change="assignWaiter(selectedTable, $event.target.value)">
+                  <option value="">Sin mesero</option>
+                  <option v-for="w in waiters" :key="w.name" :value="w.name">{{ w.full_name }}</option>
+                </select>
+              </label>
               <p v-else-if="selectedItem">{{ selectedTypeName }} del croquis.</p>
               <div class="cr-actions">
                 <button v-if="selectedTable && selectedTable.status==='Ocupada'" class="cr-primary" @click="openPOS(selectedTable)">Ver cuenta en POS</button>
@@ -167,6 +173,7 @@ const dirty = ref(false);
 const history = ref([]);
 const zoomLevel = ref(1);
 const furniture = ref([]);
+const waiters = ref([]);
 
 const svgEl = ref(null);
 const canvasEl = ref(null);
@@ -278,6 +285,7 @@ async function load() {
   try {
     rooms.value = (await call("pos_restaurant.api.get_rooms", {})) || [];
     tables.value = (await call("pos_restaurant.api.get_tables", {})) || [];
+    try { waiters.value = (await call("pos_restaurant.api.get_waiters", {})) || []; } catch (e) { waiters.value = []; }
     if (rooms.value.length && !room.value) room.value = rooms.value[0].name;
     furniture.value = loadFurniture();
   } catch (e) { toast("No se pudieron cargar las mesas"); }
@@ -523,6 +531,13 @@ async function removeTable(name) {
   }
 }
 
+async function assignWaiter(t, waiter) {
+  try {
+    await call("pos_restaurant.api.set_table_waiter", { table_name: t.name, waiter });
+    await load();
+    toast("Mesero asignado.");
+  } catch (e) { toast("No se pudo asignar el mesero."); }
+}
 async function openPOS(t) {
   try {
     let session = t.current_session;
@@ -617,6 +632,7 @@ onUnmounted(() => { unbind(); });
 .cr-details h2 { color: #193c76; margin: 6px 0 4px; }
 .cr-details small { color: #485564; letter-spacing: .06em; }
 .cr-details label { display: grid; gap: 4px; margin: 10px 0; font-size: .9rem; }
+.cr-details label.cr-waiter { border-top: 1px solid #dce1e6; padding-top: 10px; }
 .cr-details dl { display: grid; grid-template-columns: 1fr auto; gap: 8px; margin: 10px 0; }
 .cr-details dt { color: #485564; }
 .cr-details dd { margin: 0; font-weight: 650; }

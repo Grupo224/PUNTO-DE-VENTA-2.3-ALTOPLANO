@@ -80,6 +80,10 @@ def send_to_kitchen(payload):
 	if session:
 		comanda.table_session = session.name
 		comanda.table = session.table
+		if not (comanda.destination or "").strip():
+			comanda.destination = session.table
+		if not (comanda.person or "").strip():
+			comanda.person = session.waiter or frappe.session.user
 
 	for it in items_to_send:
 		ingredients = _build_ingredients_snapshot(
@@ -163,11 +167,15 @@ def get_comanda(name):
 
 
 @frappe.whitelist()
-def set_comanda_status(name, status):
+def set_comanda_status(name, status, destination=None, person=None):
 	doc = frappe.get_doc("Comanda", name)
 	allowed = STATUS_TRANSITIONS.get(doc.status, [])
 	if status not in allowed:
 		frappe.throw(_("Transición no permitida: {0} → {1}").format(doc.status, status))
+	if destination is not None:
+		doc.destination = destination
+	if person is not None:
+		doc.person = person
 	doc.status = status
 	now = frappe.utils.now()
 	if status == "En preparación":
@@ -176,10 +184,71 @@ def set_comanda_status(name, status):
 		doc.ready_at = now
 	elif status == "Entregada":
 		doc.delivered_at = now
-		if not (doc.destination or "").strip() or not (doc.person or "").strip():
-			frappe.throw(_("Completa el destino y el receptor antes de entregar"))
-	doc.save()
+		if not (doc.destination or "").strip():
+			doc.destination = _default_destination(doc)
+		if not (doc.person or "").strip():
+			doc.person = _default_person(doc)
+	doc.save(ignore_permissions=True)
 	return doc.as_dict()
+
+
+def _default_destination(doc):
+	if doc.table:
+		return doc.table
+	if doc.channel == "Pickup":
+		return "Mostrador"
+	if doc.channel == "Delivery":
+		return doc.delivery_partner or "Cliente"
+	return doc.destination or "Mostrador"
+
+
+def _default_person(doc):
+	if doc.table:
+		waiter = frappe.db.get_value("Restaurant Table", doc.table, "current_waiter")
+		return waiter or frappe.session.user
+	return frappe.session.user
+
+
+@frappe.whitelist()
+def update_comanda_handoff(name, destination=None, person=None, delivery_type=None, delivery_partner=None):
+	"""Actualiza destino/receptor de una comanda desde el portal de cocina."""
+	doc = frappe.get_doc("Comanda", name)
+	if destination is not None:
+		doc.destination = destination
+	if person is not None:
+		doc.person = person
+	if delivery_type is not None:
+		doc.delivery_type = delivery_type
+	if delivery_partner is not None:
+		doc.delivery_partner = delivery_partner
+	doc.save(ignore_permissions=True)
+	return doc.as_dict()
+
+
+@frappe.whitelist()
+def get_waiters():
+	"""Lista de usuarios activos para asignar como mesero."""
+	users = frappe.get_all(
+		"User",
+		filters={"enabled": 1, "user_type": "System User"},
+		fields=["name", "full_name"],
+		order_by="full_name asc",
+	)
+	return [{"name": u.name, "full_name": u.full_name or u.name} for u in users]
+
+
+@frappe.whitelist()
+def set_table_waiter(table_name, waiter):
+	"""Asigna mesero a la mesa y a su sesión abierta."""
+	table = frappe.get_doc("Restaurant Table", table_name)
+	table.current_waiter = waiter
+	table.save(ignore_permissions=True)
+	if table.current_session:
+		session = frappe.get_doc("Table Session", table.current_session)
+		session.waiter = waiter
+		session.save(ignore_permissions=True)
+	frappe.db.commit()
+	return {"name": table.name, "current_waiter": table.current_waiter}
 
 
 @frappe.whitelist()
